@@ -18,13 +18,13 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
             _allMethodsExceptCallRouterCallsHook = new AllMethodsExceptCallRouterCallsHook();
         }
 
-        public object GenerateProxy(ICallRouter callRouter, Type typeToProxy, Type[] additionalInterfaces, object[] constructorArguments)
+        public object GenerateProxy(ICallRouter callRouter, Type typeToProxy, Type[] additionalInterfaces, object[] constructorArguments, ProxyBuilder builder)
         {
             VerifyClassHasNotBeenPassedAsAnAdditionalInterface(additionalInterfaces);
 
             var interceptor = new CastleForwardingInterceptor(new CastleInvocationMapper(), callRouter);
             var proxyGenerationOptions = GetOptionsToMixinCallRouter(callRouter);
-            var proxy = CreateProxyUsingCastleProxyGenerator(typeToProxy, additionalInterfaces, constructorArguments, interceptor, proxyGenerationOptions);
+            var proxy = CreateProxyUsingCastleProxyGenerator(typeToProxy, additionalInterfaces, constructorArguments, interceptor, proxyGenerationOptions, builder);
             interceptor.StartIntercepting();
             return proxy;
         }
@@ -32,14 +32,15 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
         private object CreateProxyUsingCastleProxyGenerator(Type typeToProxy, Type[] additionalInterfaces,
                                                             object[] constructorArguments,
                                                             IInterceptor interceptor,
-                                                            ProxyGenerationOptions proxyGenerationOptions)
+                                                            ProxyGenerationOptions proxyGenerationOptions,
+                                                            ProxyBuilder builder)
         {
             if (typeToProxy.GetTypeInfo().IsInterface)
             {
                 VerifyNoConstructorArgumentsGivenForInterface(constructorArguments);
                 return _proxyGenerator.CreateInterfaceProxyWithoutTarget(typeToProxy, additionalInterfaces, proxyGenerationOptions, interceptor);
             }
-            return _proxyGenerator.CreateClassProxy(typeToProxy, additionalInterfaces, proxyGenerationOptions, constructorArguments, interceptor);
+            return _proxyGenerator.CreateClassProxy(typeToProxy, additionalInterfaces, proxyGenerationOptions, constructorArguments, interceptor, builder);
         }
 
         private ProxyGenerationOptions GetOptionsToMixinCallRouter(ICallRouter callRouter)
@@ -82,6 +83,30 @@ namespace NSubstitute.Proxies.CastleDynamicProxy
             if (additionalInterfaces != null && additionalInterfaces.Any(x => x.GetTypeInfo().IsClass))
             {
                 throw new SubstituteException("Can not substitute for multiple classes. To substitute for multiple types only one type can be a concrete class; other types can only be interfaces.");
+            }
+        }
+
+        private class ProxyGenerator : Castle.DynamicProxy.ProxyGenerator
+        {
+            public object CreateClassProxy(Type typeToProxy, Type[] additionalInterfaces,
+                                           ProxyGenerationOptions options,
+                                           object[] constructorArguments,
+                                           IInterceptor interceptor,
+                                           ProxyBuilder builder)
+            {
+                if (builder == null)
+                {
+                    return CreateClassProxy(typeToProxy, additionalInterfaces, options, constructorArguments, interceptor);
+                }
+
+                var proxyType = ProxyBuilder.CreateClassProxyType(typeToProxy, additionalInterfaces, options);
+                var arguments = BuildArgumentListForClassProxy(options, new[] { interceptor });
+                if (constructorArguments != null && constructorArguments.Length != 0)
+                {
+                    arguments.AddRange(constructorArguments);
+                }
+
+                return builder(proxyType, arguments.ToArray());
             }
         }
     }

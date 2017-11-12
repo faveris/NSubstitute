@@ -10,7 +10,7 @@ namespace NSubstitute.Proxies.DelegateProxy
 {
     public class DelegateProxyFactory : IProxyFactory
     {
-        public object GenerateProxy(ICallRouter callRouter, Type typeToProxy, Type[] additionalInterfaces, object[] constructorArguments)
+        public object GenerateProxy(ICallRouter callRouter, Type typeToProxy, Type[] additionalInterfaces, object[] constructorArguments, ProxyBuilder builder)
         {
             if (HasItems(additionalInterfaces))
             {
@@ -20,6 +20,10 @@ namespace NSubstitute.Proxies.DelegateProxy
             if (HasItems(constructorArguments))
             {
                 throw new SubstituteException("Can not provide constructor arguments when substituting for a delegate.");
+            }
+            if (builder != null)
+            {
+                throw new SubstituteException("Can not provide proxy builder when substituting for a delegate.");
             }
 
             return DelegateProxy(typeToProxy, callRouter);

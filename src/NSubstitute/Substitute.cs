@@ -67,8 +67,7 @@ namespace NSubstitute
         /// <returns>A substitute implementing the specified types.</returns>
         public static object For(Type[] typesToProxy, object[] constructorArguments) 
         {
-            var substituteFactory = SubstitutionContext.Current.SubstituteFactory;
-            return substituteFactory.Create(typesToProxy, constructorArguments);
+            return For(typesToProxy, constructorArguments, null);
         }
 
         /// <summary>
@@ -86,6 +85,25 @@ namespace NSubstitute
         {
             var substituteFactory = SubstitutionContext.Current.SubstituteFactory;
             return (T) substituteFactory.CreatePartial(new[] {typeof (T)}, constructorArguments);
+        }
+
+        public static object For(Type[] typesToProxy, object[] constructorArguments, ProxyBuilder builder)
+        {
+            var substituteFactory = SubstitutionContext.Current.SubstituteFactory;
+            return substituteFactory.Create(typesToProxy, constructorArguments, builder);
+        }
+
+        public static T For<T>(ProxyBuilder builder, params object[] constructorArguments)
+            where T : class
+        {
+            return (T) For(new[] { typeof(T) }, constructorArguments, builder);
+        }
+
+        public static T1 For<T1, T2>(ProxyBuilder builder, params object[] constructorArguments)
+            where T1 : class
+            where T2 : class
+        {
+            return (T1) For(new[] { typeof(T1), typeof(T2) }, constructorArguments, builder);
         }
     }
 }

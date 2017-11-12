@@ -23,7 +23,7 @@ namespace NSubstitute.Routing.AutoValues
 
         public object GetValue(Type type)
         {
-            return _substituteFactory.Create(new[] { type }, new object[0]);
+            return _substituteFactory.Create(new[] { type }, new object[0], null);
         }
 
         private bool IsPureVirtualClassWithParameterlessConstructor(Type type)
