@@ -6,7 +6,7 @@ namespace NSubstitute
     /// <summary>
     /// Create a substitute for one or more types. For example: <c>Substitute.For&lt;ISomeType&gt;()</c> 
     /// </summary>
-    public static class Substitute
+    public static partial class Substitute
     {
         /// <summary>
         /// Substitute for an interface or class.
