@@ -16,8 +16,7 @@ namespace NSubstitute
                 (type, arguments) =>
                 {
                     Component proxy = gameObject.AddComponent(type);
-                    Type[] types = arguments.Select(parameter => parameter.GetType()).ToArray();
-                    proxy.GetType().GetConstructor(types).Invoke(proxy, arguments);
+                    CallConstructor(proxy, arguments);
                     return proxy;
                 });
         }
@@ -26,6 +25,24 @@ namespace NSubstitute
             where T : Component
         {
             return ForComponent<T>(new GameObject());
+        }
+
+        public static T ForScriptableObject<T>()
+            where T : ScriptableObject
+        {
+            return For<T>(
+                (type, arguments) =>
+                {
+                    ScriptableObject proxy = ScriptableObject.CreateInstance(type);
+                    CallConstructor(proxy, arguments);
+                    return proxy;
+                });
+        }
+
+        private static void CallConstructor(object obj, object[] arguments)
+        {
+            Type[] types = arguments.Select(parameter => parameter.GetType()).ToArray();
+            obj.GetType().GetConstructor(types).Invoke(obj, arguments);
         }
     }
 }
